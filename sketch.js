@@ -83,30 +83,32 @@ class MyLines {
     this.mirrorh = false;
     this.mirrorv = false;
     this.snapv = new p5.Vector([-1],[-1])
+    this.isOnTarget = false;
+    this.targetCoords = {x1 : 0, y1 : 0, x2 : 0, y2 : 0}
   }
 
-  getcoord(val){
+  getCoord(val){
     return (val*mult)+wstOffset+constOffest
   }
 
-  cpobj(value){
+  cpObj(value){
     //return Object.assign({}, value);
     return value.clone()
   }
   
-  mirrordfunc_h(value){
+  mirrordfuncH(value){
     value.y1 = 6-value.y1;
     value.y2 = 6-value.y2;
     return value
   }
   
-  mirrordfunc_v(value){
+  mirrordfuncV(value){
     value.x1 = 6-value.x1;
     value.x2 = 6-value.x2;
     return value
   }
   
-  drawfunc(value){
+  drawFunc(value){
     value.drawme()
     if(this.mirrorh === true){
       if(this.mirrorv === true){
@@ -123,14 +125,14 @@ class MyLines {
     
   }
   
-  mirror_objects(input = Array.from(this.mymemory)){
+  mirrorObjects(input = Array.from(this.mymemory)){
     if (input.length*4 !== this.myresult.length || myflag === 1) {
-      this.myresult = input.map(this.cpobj);
-      this.mytempmem = input.map(this.cpobj);
-      this.myresult.map(this.mirrordfunc_h);
+      this.myresult = input.map(this.cpObj);
+      this.mytempmem = input.map(this.cpObj);
+      this.myresult.map(this.mirrordfuncH);
       this.myresult = this.myresult.concat(this.mytempmem);
-      this.mytempmem = this.myresult.map(this.cpobj)
-      this.mytempmem.map(this.mirrordfunc_v);
+      this.mytempmem = this.myresult.map(this.cpObj)
+      this.mytempmem.map(this.mirrordfuncV);
       this.myresult = this.myresult.concat(this.mytempmem);
       console.log(input.length);
       //console.log(this.mytempmem.length);
@@ -139,9 +141,9 @@ class MyLines {
     }
   }
 
-  hoverhighlight(){
+  hoverHighlight(){
     this.myresult.forEach(element => {
-      if(this.isoverline(element)){
+      if(this.isOverLine(element)){
         element.strokew = 20;
       }
       else {
@@ -150,8 +152,7 @@ class MyLines {
     });
   }
 
-
-  isoverline(aline){
+  isOverLine(aline){
     const xLow = Math.min(aline.getcoord(aline.x1), aline.getcoord(aline.x2));
     const yLow = Math.min(aline.getcoord(aline.y1), aline.getcoord(aline.y2));
     const xHigh = Math.max(aline.getcoord(aline.x1), aline.getcoord(aline.x2));
@@ -194,7 +195,7 @@ class MyLines {
     }
   }
 
-  addrandom(){
+  addRandom(){
     if (mouseIsPressed === true){
       this.mymemory.add(
         new MyLine(
@@ -207,9 +208,13 @@ class MyLines {
     }
   }
 
-  addandsavelines(){
+  addAndSaveLines(){
     if(this.snapv.x != -1 && this.snapv.x <=3 && this.snapv.y <=3){
-      line(this.getcoord(this.snapv.x), this.getcoord(this.snapv.y), mouseX, mouseY)
+      let {retX, retY, isNearPoint} = getCursorGridPos(0.25);
+      this.isOnTarget = isNearPoint
+      this.targetCoords = {x1 : this.snapv.x, y1 : this.snapv.y, x2 : getGridCoord(retX), y2 : getGridCoord(retY)}
+
+      line(this.getCoord(this.snapv.x), this.getCoord(this.snapv.y), retX, retY)
       if (
           //keyIsPressed === true &&
           //keyCode === ESCAPE
@@ -220,17 +225,31 @@ class MyLines {
     }
   }
   
-  drawme(mirrorh, mirrorv){   
+  drawMe(mirrorh, mirrorv){   
     //this.hoverhighlight()
     this.mirrorh = mirrorh
     this.mirrorv = mirrorv
-    this.myresult.forEach(this.drawfunc, this);
+    this.myresult.forEach(this.drawFunc, this);
   }
   
 }
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
+}
+
+function getCanvasCoord(val){
+  return (val*mult)+wstOffset+constOffest
+}
+
+function getGridCoord(val){
+  let result = ((val-wstOffset-constOffest)/mult)
+  if (result%1 === 0){
+    return result
+  }
+  else{
+    return -1
+  }
 }
 
 function setup() {
@@ -240,46 +259,61 @@ function setup() {
   mylines1 = new MyLines();
   mylines1.mymemory.add(myline1);
   mylines1.mymemory.add(myline2);
-
 }
 
 function draw() {
   background(256);
   //mylines1.addrandom();
-  mylines1.drawme(true, true);
-  mylines1.addandsavelines();
+  mylines1.drawMe(true, true);
+  mylines1.addAndSaveLines();
   //mylines1.mirror_objects()
   //mylines1.hoverhighlight();
 }
 
 function mouseReleased() {
-  console.log("Mouse is released");
+  let {x1, y1, x2, y2} = mylines1.targetCoords
+  if (mylines1.isOnTarget === true){
+    const mynewline = new MyLine(x1,y1,x2,y2);
+    mylines1.mymemory.add(mynewline);
+  }
 }
 
-function getCursorGridPos() {
-  let coarseXvar = Math.floor((mouseX-wstOffset-constOffest)/mult+0.5);
-  let coarseYvar = Math.floor((mouseY-wstOffset-constOffest)/mult+0.5);
+function getCursorGridPos(threshold = 0.1, mirrorLine = 3) {
+  let coarseX = Math.floor((mouseX-wstOffset-constOffest)/mult+0.5);
+  let coarseY = Math.floor((mouseY-wstOffset-constOffest)/mult+0.5);
+  let fineX = abs(((mouseX-wstOffset-constOffest)/mult)-coarseX);
+  let fineY = abs(((mouseY-wstOffset-constOffest)/mult)-coarseY);
+  let retX;
+  let retY;
+  let isNearPoint = false;
+  if (
+    fineX < threshold &&
+    fineY < threshold &&
+    coarseX <=mirrorLine &&
+    coarseY <=mirrorLine)
+  {
+    retX = getCanvasCoord(coarseX);
+    retY = getCanvasCoord(coarseY);
+    isNearPoint = true;
+  }
+  else {
+    retX = mouseX;
+    retY = mouseY;
+    isNearPoint = false;
+  }
   return {
-    coarseX: coarseXvar,
-    fineX: abs(((mouseX-wstOffset-constOffest)/mult)-coarseXvar),
-    coarseY: coarseYvar,
-    fineY: abs(((mouseY-wstOffset-constOffest)/mult)-coarseYvar)
+    retX : retX,
+    retY : retY,
+    isNearPoint : isNearPoint
   }
 }
 
 function mousePressed() {
   //Long Version: let {coarseX: coarseX, fineX: fineX, coarseY: coarseY, fineY: fineY} = getCursorGridPos()
-  let {coarseX, fineX, coarseY, fineY} = getCursorGridPos()
-
-  if (
-      fineX < 0.1 &&
-      fineY < 0.1 &&
-      coarseX <=3 &&
-      coarseY <=3)
-    {
-      mylines1.snapv.x = coarseX;
-      mylines1.snapv.y = coarseY;
-      console.log(mylines1.snapv)
-    }
-
+  let {retX, retY, isNearPoint} = getCursorGridPos()
+  if(isNearPoint === true){
+    mylines1.snapv.x = getGridCoord(retX);
+    mylines1.snapv.y = getGridCoord(retY);
+    console.log(mylines1.snapv)
+  }
 }
