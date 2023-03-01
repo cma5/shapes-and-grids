@@ -1,5 +1,5 @@
 # Shapes and grids
-Interactive browser applications that explore design-concepts
+Interactive browser applications that explore design-concepts.
 
 ## Concept
 The examples will demonstrate or continue design-concepts and ideas such as proposed in the book "Programme Entwerfen" by Karl Gerstner.
