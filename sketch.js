@@ -1,7 +1,7 @@
 let mult = 100;
 let wst = 1;
-let wst_offset = Math.floor(wst/2);
-let const_offest = 20;
+let wstOffset = Math.floor(wst/2);
+let constOffest = 20;
 let mylines1, mylines2;
 let indicatorline
 let myflag = 0;
@@ -17,11 +17,10 @@ class MyLine {
     this.strokecol = 70;
     this.mirroraxis_h = ah*2;
     this.mirroraxis_v = av*2;
-
   }
 
   getcoord(val){
-    return (val*mult)+wst_offset+const_offest
+    return (val*mult)+wstOffset+constOffest
   }
 
   drawme(){
@@ -87,7 +86,7 @@ class MyLines {
   }
 
   getcoord(val){
-    return (val*mult)+wst_offset+const_offest
+    return (val*mult)+wstOffset+constOffest
   }
 
   cpobj(value){
@@ -197,15 +196,28 @@ class MyLines {
 
   addrandom(){
     if (mouseIsPressed === true){
-      this.mymemory.add(new MyLine(getRandomInt(4),getRandomInt(4),getRandomInt(4),getRandomInt(4)));
+      this.mymemory.add(
+        new MyLine(
+          getRandomInt(4),
+          getRandomInt(4),
+          getRandomInt(4),
+          getRandomInt(4)
+        )
+      );
     }
   }
 
   addandsavelines(){
-    if(this.snapv.x != -1){
+    if(this.snapv.x != -1 && this.snapv.x <=3 && this.snapv.y <=3){
       line(this.getcoord(this.snapv.x), this.getcoord(this.snapv.y), mouseX, mouseY)
+      if (
+          //keyIsPressed === true &&
+          //keyCode === ESCAPE
+          !mouseIsPressed
+          ) {
+        this.snapv.x = -1;
+      }
     }
-
   }
   
   drawme(mirrorh, mirrorv){   
@@ -222,7 +234,7 @@ function getRandomInt(max) {
 }
 
 function setup() {
-  createCanvas(6*mult+wst+2*const_offest+40, 6*mult+wst+2*const_offest);
+  createCanvas(6*mult+wst+2*constOffest+40, 6*mult+wst+2*constOffest);
   const myline1 = new MyLine(0,0,3,0);
   const myline2 = new MyLine(0,0,0,3);
   mylines1 = new MyLines();
@@ -244,18 +256,30 @@ function mouseReleased() {
   console.log("Mouse is released");
 }
 
-function mousePressed(){
-  let coarsex = Math.floor((mouseX-wst_offset-const_offest)/mult+0.5);
-  let finex = abs(((mouseX-wst_offset-const_offest)/mult)-coarsex);
-  let coarsey = Math.floor((mouseY-wst_offset-const_offest)/mult+0.5);
-  let finey = abs(((mouseY-wst_offset-const_offest)/mult)-coarsey);
-  let snapx = -1, snapy = -1
-
-  if (finex < 0.1 && finey < 0.1 && snapx === -1){
-    drawable = true;
-    mylines1.snapv.x = coarsex;
-    mylines1.snapv.y = coarsey;
-    console.log(mylines1.snapv)
+function getCursorGridPos() {
+  let coarseXvar = Math.floor((mouseX-wstOffset-constOffest)/mult+0.5);
+  let coarseYvar = Math.floor((mouseY-wstOffset-constOffest)/mult+0.5);
+  return {
+    coarseX: coarseXvar,
+    fineX: abs(((mouseX-wstOffset-constOffest)/mult)-coarseXvar),
+    coarseY: coarseYvar,
+    fineY: abs(((mouseY-wstOffset-constOffest)/mult)-coarseYvar)
   }
+}
+
+function mousePressed() {
+  //Long Version: let {coarseX: coarseX, fineX: fineX, coarseY: coarseY, fineY: fineY} = getCursorGridPos()
+  let {coarseX, fineX, coarseY, fineY} = getCursorGridPos()
+
+  if (
+      fineX < 0.1 &&
+      fineY < 0.1 &&
+      coarseX <=3 &&
+      coarseY <=3)
+    {
+      mylines1.snapv.x = coarseX;
+      mylines1.snapv.y = coarseY;
+      console.log(mylines1.snapv)
+    }
 
 }
