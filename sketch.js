@@ -218,7 +218,7 @@ class MyLines {
         x2 : getGridCoord(retX),
         y2 : getGridCoord(retY)
       }
-      
+
       line(this.getCoord(this.snapv.x), this.getCoord(this.snapv.y), retX, retY)
       if (
           //keyIsPressed === true &&
@@ -319,6 +319,5 @@ function mousePressed() {
   if(isNearPoint === true){
     mylines1.snapv.x = getGridCoord(retX);
     mylines1.snapv.y = getGridCoord(retY);
-    console.log(mylines1.snapv)
   }
 }
