@@ -212,8 +212,13 @@ class MyLines {
     if(this.snapv.x != -1 && this.snapv.x <=3 && this.snapv.y <=3){
       let {retX, retY, isNearPoint} = getCursorGridPos(0.25);
       this.isOnTarget = isNearPoint
-      this.targetCoords = {x1 : this.snapv.x, y1 : this.snapv.y, x2 : getGridCoord(retX), y2 : getGridCoord(retY)}
-
+      this.targetCoords = {
+        x1 : this.snapv.x,
+        y1 : this.snapv.y,
+        x2 : getGridCoord(retX),
+        y2 : getGridCoord(retY)
+      }
+      
       line(this.getCoord(this.snapv.x), this.getCoord(this.snapv.y), retX, retY)
       if (
           //keyIsPressed === true &&
