@@ -297,7 +297,7 @@ function setup() {
   buttonDraw = createButton('Draw');
   buttonDraw.position(constOffest*9+8, 6*mult+2*constOffest-12);
   buttonDraw.mousePressed(clearBackground);
-
+  noLoop();
 }
 
 function draw() {
@@ -349,6 +349,7 @@ function getCursorGridPos(threshold = 0.1, mirrorLine = 3) {
 }
 
 function mousePressed() {
+  loop();
   //Long Version: let {coarseX: coarseX,
   // fineX: fineX, coarseY: coarseY, fineY: fineY} = getCursorGridPos()
   let {retX, retY, isNearPoint} = getCursorGridPos()
