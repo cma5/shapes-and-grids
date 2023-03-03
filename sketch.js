@@ -3,14 +3,12 @@ let wst = 1;
 let wstOffset = Math.floor(wst/2);
 let constOffest = 20;
 let mylines1;
-let indicatorline
 let myflag = 0;
 let buttonClear;
 let buttonMove;
 let buttonRandom;
 let buttonDraw;
 let buttonSpace = 20;
-
 
 class MyLine {
   constructor(x1, y1, x2, y2, ah = 3, av = 3){
@@ -93,8 +91,18 @@ class MyLines {
     this.targetCoords = {x1 : 0, y1 : 0, x2 : 0, y2 : 0}
   }
 
-  getCoord(val){
+  getCanvasCoord(val){
     return (val*mult)+wstOffset+constOffest
+  }
+
+  getGridCoord(val){
+    let result = ((val-wstOffset-constOffest)/mult)
+    if (result%1 === 0){
+      return result
+    }
+    else{
+      return -1
+    }
   }
 
   cpObj(value){
@@ -147,14 +155,17 @@ class MyLines {
     }
   }
 
-  hoverHighlight(){
+  hover(linehover = false, pointhover = true){
     this.myresult.forEach(element => {
-      if(this.isOverLine(element)){
-        element.strokew = 20;
+      if (linehover){
+        if(this.isOverLine(element)){
+          element.strokew = 20;
+        }
+        else {
+          element.strokew = wst;
+        }
       }
-      else {
-        element.strokew = wst;
-      }
+      
     });
   }
 
@@ -216,16 +227,16 @@ class MyLines {
 
   addAndSaveLines(){
     if(this.snapv.x != -1 && this.snapv.x <=3 && this.snapv.y <=3){
-      let {retX, retY, isNearPoint} = getCursorGridPos(0.25);
+      let {retX, retY, isNearPoint} = this.getCursorGridPos(0.25);
       this.isOnTarget = isNearPoint
       this.targetCoords = {
         x1 : this.snapv.x,
         y1 : this.snapv.y,
-        x2 : getGridCoord(retX),
-        y2 : getGridCoord(retY)
+        x2 : this.getGridCoord(retX),
+        y2 : this.getGridCoord(retY)
       }
 
-      line(this.getCoord(this.snapv.x), this.getCoord(this.snapv.y), retX, retY)
+      line(this.getCanvasCoord(this.snapv.x), this.getCanvasCoord(this.snapv.y), retX, retY)
       if (
           //keyIsPressed === true &&
           //keyCode === ESCAPE
@@ -237,7 +248,6 @@ class MyLines {
   }
   
   drawMe(mirrorh, mirrorv){   
-    //this.hoverhighlight()
     this.mirrorh = mirrorh
     this.mirrorv = mirrorv
     this.myresult.forEach(this.drawFunc, this);
@@ -254,25 +264,41 @@ class MyLines {
     });
     this.myresult = this.mymemory;
   }
+
+  getCursorGridPos(threshold = 0.1, mirrorLine = 3) {
+    let coarseX = Math.floor((mouseX-wstOffset-constOffest)/mult+0.5);
+    let coarseY = Math.floor((mouseY-wstOffset-constOffest)/mult+0.5);
+    let fineX = abs(((mouseX-wstOffset-constOffest)/mult)-coarseX);
+    let fineY = abs(((mouseY-wstOffset-constOffest)/mult)-coarseY);
+    let retX;
+    let retY;
+    let isNearPoint = false;
+    if (
+      fineX < threshold &&
+      fineY < threshold &&
+      coarseX <=mirrorLine &&
+      coarseY <=mirrorLine)
+    {
+      retX = this.getCanvasCoord(coarseX);
+      retY = this.getCanvasCoord(coarseY);
+      isNearPoint = true;
+    }
+    else {
+      retX = mouseX;
+      retY = mouseY;
+      isNearPoint = false;
+    }
+    return {
+      retX : retX,
+      retY : retY,
+      isNearPoint : isNearPoint
+    }
+  }
   
 }
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
-}
-
-function getCanvasCoord(val){
-  return (val*mult)+wstOffset+constOffest
-}
-
-function getGridCoord(val){
-  let result = ((val-wstOffset-constOffest)/mult)
-  if (result%1 === 0){
-    return result
-  }
-  else{
-    return -1
-  }
 }
 
 function setup() {
@@ -281,23 +307,25 @@ function setup() {
   myline1.sticky = true;
   const myline2 = new MyLine(0,0,0,3);
   myline2.sticky = true;
+
+
   mylines1 = new MyLines();
   mylines1.mymemory.add(myline1);
   mylines1.mymemory.add(myline2);
 
   buttonClear = createButton('Clear');
   buttonClear.position(constOffest*1, 6*mult+2*constOffest-12);
-  buttonClear.mousePressed(clearBackground);
+  buttonClear.mousePressed(ButtonClearBackground);
   buttonMove = createButton('Move');
   buttonMove.position(constOffest*3+9, 6*mult+2*constOffest-12);
-  buttonMove.mousePressed(clearBackground);
+  buttonMove.mousePressed();
   buttonRandom = createButton('Random');
   buttonRandom.position(constOffest*6, 6*mult+2*constOffest-12);
-  buttonRandom.mousePressed(clearBackground);
+  buttonRandom.mousePressed();
   buttonDraw = createButton('Draw');
   buttonDraw.position(constOffest*9+8, 6*mult+2*constOffest-12);
-  buttonDraw.mousePressed(clearBackground);
-  noLoop();
+  buttonDraw.mousePressed();
+  //noLoop();
 }
 
 function draw() {
@@ -306,59 +334,33 @@ function draw() {
   mylines1.drawMe(true, true);
   mylines1.addAndSaveLines();
   //mylines1.mirror_objects()
-  //mylines1.hoverhighlight();
+  mylines1.hover();
 }
 
 function mouseReleased() {
   let {x1, y1, x2, y2} = mylines1.targetCoords
-  let {retX, retY, isNearPoint} = getCursorGridPos(0.25)
-  if (mylines1.isOnTarget && isNearPoint && getGridCoord(retX)===x2 && getGridCoord(retY)===y2){
+  let {retX, retY, isNearPoint} = mylines1.getCursorGridPos(0.25)
+  if (
+    mylines1.isOnTarget &&
+    isNearPoint &&
+    mylines1.getGridCoord(retX)===x2 &&
+    mylines1.getGridCoord(retY)===y2){
     const mynewline = new MyLine(x1,y1,x2,y2);
     mylines1.mymemory.add(mynewline);
   }
 }
 
-function getCursorGridPos(threshold = 0.1, mirrorLine = 3) {
-  let coarseX = Math.floor((mouseX-wstOffset-constOffest)/mult+0.5);
-  let coarseY = Math.floor((mouseY-wstOffset-constOffest)/mult+0.5);
-  let fineX = abs(((mouseX-wstOffset-constOffest)/mult)-coarseX);
-  let fineY = abs(((mouseY-wstOffset-constOffest)/mult)-coarseY);
-  let retX;
-  let retY;
-  let isNearPoint = false;
-  if (
-    fineX < threshold &&
-    fineY < threshold &&
-    coarseX <=mirrorLine &&
-    coarseY <=mirrorLine)
-  {
-    retX = getCanvasCoord(coarseX);
-    retY = getCanvasCoord(coarseY);
-    isNearPoint = true;
-  }
-  else {
-    retX = mouseX;
-    retY = mouseY;
-    isNearPoint = false;
-  }
-  return {
-    retX : retX,
-    retY : retY,
-    isNearPoint : isNearPoint
-  }
-}
-
 function mousePressed() {
-  loop();
+  // In conjunction with noloop: loop();
   //Long Version: let {coarseX: coarseX,
   // fineX: fineX, coarseY: coarseY, fineY: fineY} = getCursorGridPos()
-  let {retX, retY, isNearPoint} = getCursorGridPos()
+  let {retX, retY, isNearPoint} = mylines1.getCursorGridPos()
   if(isNearPoint === true){
-    mylines1.snapv.x = getGridCoord(retX);
-    mylines1.snapv.y = getGridCoord(retY);
+    mylines1.snapv.x = mylines1.getGridCoord(retX);
+    mylines1.snapv.y = mylines1.getGridCoord(retY);
   }
 }
 
-function clearBackground(){
+function ButtonClearBackground(){
   mylines1.clear();
 }
