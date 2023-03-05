@@ -173,12 +173,18 @@ class MyLines {
   hover(pointhover = true){
     if (pointhover){
       let {retX, retY, isNearPoint} = this.getCursorGridPos();
-      if (isNearPoint){
-        cursor('pointer');
-      }
-      else {
-        cursor();
-      }
+      let pointisselected = false;
+      this.mymemories.lines.forEach(aline => {
+        if (aline.selected === true &&
+          ((this.getGridCoord(retX) === aline.x1 && this.getGridCoord(retY) === aline.y1)||
+          (this.getGridCoord(retX) === aline.x2 && this.getGridCoord(retY) === aline.y2))
+        ){
+          cursor('grab');
+        }
+        else {
+          cursor();
+        }
+      })
     }
   }
 
@@ -320,13 +326,24 @@ class MyLines {
     //this.mymemories.frame.forEach(this.drawFunc, this);
   }
 
-  clear(){
-    this.mymemories.lines.forEach((point) => {
-      if (point.sticky === false) 
-        {
-          this.mymemories.lines.delete(point);
-      }
-    });
+  clear(deleteselected = false){
+    if (deleteselected === true){
+      this.mymemories.lines.forEach((aline) => {
+        if (aline.selected === true) 
+          {
+            this.mymemories.lines.delete(aline);
+        }
+      });
+    }
+    else {
+      this.mymemories.lines.forEach((aline) => {
+        if (aline.sticky === false) 
+          {
+            this.mymemories.lines.delete(aline);
+        }
+      });
+    }
+    
     //this.myresult = this.mymemory;
   }
 
@@ -448,7 +465,7 @@ function draw() {
   //mylines1.addrandom();
   mylines1.printMe(true, true);
   mylines1.drawLines();
-  mylines1.hover(false, true);
+  mylines1.hover(true);
   
   //mylines1.mirror_objects()
 }
@@ -495,4 +512,10 @@ function buttonRandomFunc(){
 
 function buttonDrawFunc(){
 
+}
+
+function keyPressed() {
+  if (keyCode === DELETE) {
+    mylines1.clear(true);
+  }
 }
