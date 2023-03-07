@@ -6,6 +6,7 @@ let constOffset = 20;
 let mylines1;
 let myflag = 0;
 
+
 //buttons
 let buttonClear;
 let buttonMove;
@@ -18,13 +19,13 @@ let gridCheckbox;
 let frameCheckbox;
 
 class MyLine {
-  constructor(x1, y1, x2, y2, ah = 3, av = 3){
+  constructor(x1, y1, x2, y2, strokecol = 70, ah = 3, av = 3){
     this.x1 = x1;
     this.y1 = y1;
     this.x2 = x2;
     this.y2 = y2;
     this.strokew = wst;
-    this.strokecol = 70;
+    this.strokecol = strokecol;
     this.mirroraxis_h = ah*2;
     this.mirroraxis_v = av*2;
     this.sticky = false;
@@ -103,6 +104,8 @@ class MyLines {
     this.isOnTarget = false;
     this.targetCoords = {x1 : 0, y1 : 0, x2 : 0, y2 : 0}
     this.cDim = 3;
+    this.selectPoint = {isactive: false, line: new MyLine, isx2 : false}
+    this.cursorval = ''
   }
 
   getCanvasCoord(val){
@@ -174,25 +177,40 @@ class MyLines {
     if (pointhover){
       let {retX, retY, isNearPoint} = this.getCursorGridPos();
       let pointisselected = false;
-      this.mymemories.lines.forEach(aline => {
-        if (aline.selected === true &&
-          ((this.getGridCoord(retX) === aline.x1 && this.getGridCoord(retY) === aline.y1)||
-          (this.getGridCoord(retX) === aline.x2 && this.getGridCoord(retY) === aline.y2))
-        ){
-          cursor('grab');
-        }
-        else {
-          cursor();
-        }
-      })
+      let mycursorval = ''
+      
+      if(
+        this.getGridCoord(retX) === this.selectPoint.line.x1 &&
+        this.getGridCoord(retY) === this.selectPoint.line.y1
+      ){
+        mycursorval = 'grab';
+        cursor(mycursorval);
+        this.selectPoint.isactive == true;
+      }
+      else if(
+        this.getGridCoord(retX) === this.selectPoint.line.x2 &&
+        this.getGridCoord(retY) === this.selectPoint.line.y2
+      ){
+        mycursorval = 'grab';
+        this.selectPoint.isx2 = true;
+        cursor(mycursorval);
+        this.selectPoint.isactive == true;
+      }
+      else {
+        mycursorval = '';
+        cursor(mycursorval);
+        this.selectPoint.isactive == false;
+      } 
     }
   }
 
-  isOnLine(lineselect = true,){
+  isOnLine(lineselect = true){
+    let onLineTempSet = new Set();
     this.mymemories.lines.forEach(element => {
       if (lineselect){
         if(this.isOverLine(element)){
           element.selected = true;
+          this.selectPoint.line = element;
         }
         else {
           element.selected = false;
@@ -377,7 +395,7 @@ class MyLines {
     }
   }
 
-  drawGrid(mysize=0.05) {
+  drawGrid(mysize=0.05, mycolor = 190) {
     let tempset = new Set();
     for (let indeY = 0; indeY < this.cDim*2+1; indeY++) {
       for (let indeX = 0; indeX < this.cDim*2+1; indeX++) {
@@ -386,30 +404,30 @@ class MyLines {
           
         }
         else if (indeX === 0 && indeY !== 0){
-          let gridline = new MyLine(indeX, indeY, indeX+mysize, indeY);
+          let gridline = new MyLine(indeX, indeY, indeX+mysize, indeY, mycolor);
           gridline.sticky = true;
           tempset.add(gridline);
         }
         else if (indeX !== 0 && indeY === 0){
-          let gridline = new MyLine(indeX, indeY, indeX, indeY+mysize);
+          let gridline = new MyLine(indeX, indeY, indeX, indeY+mysize, mycolor);
           gridline.sticky = true;
           tempset.add(gridline);
         }
         else if (indeX === this.cDim*2 && indeY !== 0){
-          let gridline = new MyLine(indeX, indeY, indeX, indeY-mysize);
+          let gridline = new MyLine(indeX, indeY, indeX, indeY-mysize, mycolor);
           gridline.sticky = true;
           tempset.add(gridline);
         }
         else if (indeX !== 0 && indeY === this.cDim*2){
-          let gridline = new MyLine(new MyLine(indeX, indeY, indeX-mysize, indeY));
+          let gridline = new MyLine(new MyLine(indeX, indeY, indeX-mysize, indeY, mycolor));
           gridline.sticky = true;
           tempset.add(gridline);
         }
         else {
-          let gridline1 = new MyLine(indeX-mysize, indeY, indeX+mysize, indeY);
+          let gridline1 = new MyLine(indeX-mysize, indeY, indeX+mysize, indeY, mycolor);
           gridline1.sticky = true;
           tempset.add(gridline1);
-          let gridline2 = new MyLine(indeX, indeY-mysize, indeX, indeY+mysize);
+          let gridline2 = new MyLine(indeX, indeY-mysize, indeX, indeY+mysize, mycolor);
           gridline2.sticky = true;
           tempset.add(gridline2);
         }
@@ -466,9 +484,22 @@ function draw() {
   mylines1.printMe(true, true);
   mylines1.drawLines();
   mylines1.hover(true);
+  //console.log(mylines1.cursorval);
   
   //mylines1.mirror_objects()
 }
+
+function mousePressed() {
+  //Long Version: let {coarseX: coarseX,
+  // fineX: fineX, coarseY: coarseY, fineY: fineY} = getCursorGridPos()
+  let {retX, retY, isNearPoint} = mylines1.getCursorGridPos()
+  mylines1.isOnLine();
+  if(isNearPoint === true){
+    mylines1.snapv.x = mylines1.getGridCoord(retX);
+    mylines1.snapv.y = mylines1.getGridCoord(retY);
+  }
+}
+
 
 function mouseReleased() {
   let {x1, y1, x2, y2} = mylines1.targetCoords
@@ -483,16 +514,7 @@ function mouseReleased() {
   }
 }
 
-function mousePressed() {
-  //Long Version: let {coarseX: coarseX,
-  // fineX: fineX, coarseY: coarseY, fineY: fineY} = getCursorGridPos()
-  let {retX, retY, isNearPoint} = mylines1.getCursorGridPos()
-  mylines1.isOnLine();
-  if(isNearPoint === true){
-    mylines1.snapv.x = mylines1.getGridCoord(retX);
-    mylines1.snapv.y = mylines1.getGridCoord(retY);
-  }
-}
+
 
 function mouseMoved() {
   return false
