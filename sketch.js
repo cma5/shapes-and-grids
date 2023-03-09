@@ -9,9 +9,7 @@ let myflag = 0;
 
 //buttons
 let buttonClear;
-let buttonMove;
 let buttonRandom;
-let buttonDraw;
 let buttonSpace = 120;
 
 //checkboxes
@@ -208,7 +206,6 @@ class MyLines {
     }
   }
 
-
   isOnLine(lineselect = true){
     let count = 0;
     this.mymemories.lines.forEach(element => {
@@ -300,16 +297,16 @@ class MyLines {
       if(this.isDragable){
         if(!this.selectPoint.is2){
           line(
-            mouseX,
-            mouseY,
+            retX,
+            retY,
             this.getCanvasCoord(this.selectPoint.line.x2),
             this.getCanvasCoord(this.selectPoint.line.y2)
           )
         }
         else{
           line(
-          mouseX,
-          mouseY,
+          retX,
+          retY,
           this.getCanvasCoord(this.selectPoint.line.x1),
           this.getCanvasCoord(this.selectPoint.line.y1)
           )
@@ -486,15 +483,9 @@ function setup() {
   buttonClear = createButton('Clear');
   buttonClear.position(constOffset*1, 6*mult+2*constOffset-12);
   buttonClear.mousePressed(ButtonClearBackground);
-  buttonMove = createButton('Move');
-  buttonMove.position(constOffset*3+9, 6*mult+2*constOffset-12);
-  buttonMove.mousePressed();
   buttonRandom = createButton('Random');
-  buttonRandom.position(constOffset*6, 6*mult+2*constOffset-12);
-  buttonRandom.mousePressed();
-  buttonDraw = createButton('Draw');
-  buttonDraw.position(constOffset*9+8, 6*mult+2*constOffset-12);
-  buttonDraw.mousePressed();
+  buttonRandom.position(constOffset*3+9, 6*mult+2*constOffset-12);
+  buttonRandom.mousePressed(buttonRandomFunc);
 
   //checkboxes
   gridCheckbox = createCheckbox("Grid", true)
@@ -571,16 +562,8 @@ function ButtonClearBackground(){
   mylines1.clear();
 }
 
-function buttonMoveFunc(){
-
-}
-
 function buttonRandomFunc(){
-  
-}
-
-function buttonDrawFunc(){
-
+  mylines1.addRandom()
 }
 
 function keyPressed() {
