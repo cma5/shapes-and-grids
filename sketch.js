@@ -12,7 +12,7 @@ let buttonClear;
 let buttonMove;
 let buttonRandom;
 let buttonDraw;
-let buttonSpace = 20;
+let buttonSpace = 120;
 
 //checkboxes
 let gridCheckbox;
@@ -48,6 +48,9 @@ class MyLine {
     if (this.selected){
       ellipse(this.getcoord(this.x1), this.getcoord(this.y1), 10, 10);
       ellipse(this.getcoord(this.x2), this.getcoord(this.y2), 10, 10);
+      textSize(16);
+      text('1', this.getcoord(this.x1)-4, this.getcoord(this.y1)-12);
+      text('2', this.getcoord(this.x2)-4, this.getcoord(this.y2)-12);
     }
   }
 
@@ -104,8 +107,10 @@ class MyLines {
     this.isOnTarget = false;
     this.targetCoords = {x1 : 0, y1 : 0, x2 : 0, y2 : 0}
     this.cDim = 3;
-    this.selectPoint = {isactive: false, line: new MyLine, isx2 : false}
+    this.selectPoint = {isactive: false, line: new MyLine, is2 : false}
     this.cursorval = ''
+    this.hoverstate = false
+    this.isDragable = false
   }
 
   getCanvasCoord(val){
@@ -173,44 +178,45 @@ class MyLines {
     }
   }
 
-  hover(pointhover = true){
-    if (pointhover){
+  hover(){
+    if (this.hoverstate === false){
       let {retX, retY, isNearPoint} = this.getCursorGridPos();
-      let pointisselected = false;
-      let mycursorval = ''
       
       if(
         this.getGridCoord(retX) === this.selectPoint.line.x1 &&
         this.getGridCoord(retY) === this.selectPoint.line.y1
       ){
-        mycursorval = 'grab';
-        cursor(mycursorval);
-        this.selectPoint.isactive == true;
+        cursor('grab');
+        this.selectPoint.isactive = true;
+        this.selectPoint.is2 = false;
       }
       else if(
         this.getGridCoord(retX) === this.selectPoint.line.x2 &&
         this.getGridCoord(retY) === this.selectPoint.line.y2
       ){
-        mycursorval = 'grab';
-        this.selectPoint.isx2 = true;
-        cursor(mycursorval);
-        this.selectPoint.isactive == true;
+        this.selectPoint.is2 = true;
+        cursor('grab');
+        this.selectPoint.isactive = true;
       }
       else {
-        mycursorval = '';
-        cursor(mycursorval);
-        this.selectPoint.isactive == false;
+        cursor();
+        this.selectPoint.isactive = false;
       } 
+    }
+    else {
+      cursor('grabbing');
     }
   }
 
+
   isOnLine(lineselect = true){
-    let onLineTempSet = new Set();
+    let count = 0;
     this.mymemories.lines.forEach(element => {
       if (lineselect){
         if(this.isOverLine(element)){
           element.selected = true;
           this.selectPoint.line = element;
+          count += 1;
         }
         else {
           element.selected = false;
@@ -218,10 +224,10 @@ class MyLines {
       }
     }
     );
-  }
-
-  selectLine(){
-
+    console.log(count)
+    if(count === 0){
+      this.selectPoint.line = 0;
+    }
   }
 
   isOverLine(aline){
@@ -291,30 +297,50 @@ class MyLines {
         x2 : this.getGridCoord(retX),
         y2 : this.getGridCoord(retY)
       }
+      if(this.isDragable){
+        if(!this.selectPoint.is2){
+          line(
+            mouseX,
+            mouseY,
+            this.getCanvasCoord(this.selectPoint.line.x2),
+            this.getCanvasCoord(this.selectPoint.line.y2)
+          )
+        }
+        else{
+          line(
+          mouseX,
+          mouseY,
+          this.getCanvasCoord(this.selectPoint.line.x1),
+          this.getCanvasCoord(this.selectPoint.line.y1)
+          )
+        }
+      }
+      else{
+        line(
+          this.getCanvasCoord(this.snapv.x),
+          this.getCanvasCoord(this.snapv.y),
+          retX,
+          retY
+        );
+        line(
+          this.getCanvasCoord(this.snapv.x),
+          canvLim - this.getCanvasCoord(this.snapv.y),
+          retX,
+          canvLim - retY
+        );
+        line(
+          canvLim - this.getCanvasCoord(this.snapv.x),
+          this.getCanvasCoord(this.snapv.y),
+          canvLim - retX,
+          retY
+        );
+        line(
+          canvLim - this.getCanvasCoord(this.snapv.x),
+          canvLim - this.getCanvasCoord(this.snapv.y),
+          canvLim - retX,
+          canvLim - retY);
+      }
 
-      line(
-        this.getCanvasCoord(this.snapv.x),
-        this.getCanvasCoord(this.snapv.y),
-        retX,
-        retY
-      );
-      line(
-        this.getCanvasCoord(this.snapv.x),
-        canvLim - this.getCanvasCoord(this.snapv.y),
-        retX,
-        canvLim - retY
-      );
-      line(
-        canvLim - this.getCanvasCoord(this.snapv.x),
-        this.getCanvasCoord(this.snapv.y),
-        canvLim - retX,
-        retY
-      );
-      line(
-        canvLim - this.getCanvasCoord(this.snapv.x),
-        canvLim - this.getCanvasCoord(this.snapv.y),
-        canvLim - retX,
-        canvLim - retY);
       if (
           //keyIsPressed === true &&
           //keyCode === ESCAPE
@@ -441,7 +467,6 @@ class MyLines {
     this.mymemories.frame.add(new MyLine(0,0,3,0))
     this.mymemories.frame.add(new MyLine(0,0,0,3))
   }
-  
 }
 
 function getRandomInt(max) {
@@ -483,9 +508,10 @@ function draw() {
   //mylines1.addrandom();
   mylines1.printMe(true, true);
   mylines1.drawLines();
-  mylines1.hover(true);
+  mylines1.hover();
   //console.log(mylines1.cursorval);
-  
+  textSize(14);
+  text(`Hoverstate: ${mylines1.hoverstate}\nisDragable: ${mylines1.isDragable}\nSelectionpoint active: ${mylines1.selectPoint.isactive}\nSelectionpoint is2: ${mylines1.selectPoint.is2}`, 20, 690);
   //mylines1.mirror_objects()
 }
 
@@ -495,11 +521,16 @@ function mousePressed() {
   let {retX, retY, isNearPoint} = mylines1.getCursorGridPos()
   mylines1.isOnLine();
   if(isNearPoint === true){
+    if(mylines1.selectPoint.isactive){
+      mylines1.hoverstate = true;
+      mylines1.isDragable = true;
+    }
     mylines1.snapv.x = mylines1.getGridCoord(retX);
     mylines1.snapv.y = mylines1.getGridCoord(retY);
+    
   }
+  
 }
-
 
 function mouseReleased() {
   let {x1, y1, x2, y2} = mylines1.targetCoords
@@ -508,13 +539,29 @@ function mouseReleased() {
     mylines1.isOnTarget &&
     isNearPoint &&
     mylines1.getGridCoord(retX)===x2 &&
-    mylines1.getGridCoord(retY)===y2){
-    const mynewline = new MyLine(x1,y1,x2,y2);
-    mylines1.mymemories.lines.add(mynewline);
+    mylines1.getGridCoord(retY)===y2 &&
+    !(x1 === x2 && y1 === y2))//prevent single point lines
+    { 
+      if(mylines1.isDragable){
+        if (!mylines1.selectPoint.is2){
+          mylines1.selectPoint.line.x1 = x2;
+          mylines1.selectPoint.line.y1 = y2;
+        }
+        else{
+          mylines1.selectPoint.line.x2 = x2;
+          mylines1.selectPoint.line.y2 = y2;
+        } 
+      }
+      else{
+        const mynewline = new MyLine(x1,y1,x2,y2);
+        mylines1.mymemories.lines.add(mynewline);
+      }
+    
   }
+  mylines1.hoverstate = false; //for the grabbing animation of the cursor
+  mylines1.isDragable = false;
+
 }
-
-
 
 function mouseMoved() {
   return false
