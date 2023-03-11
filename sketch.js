@@ -241,14 +241,23 @@ class MyLines {
     else if (count === 1){
       this.selectPoint.line = selectionBuffer[0];
       this.selectPoint.line.selected = true;
+      this.prevSelectLine = this.selectPoint.line;
     }
     else {
       selectionBuffer.forEach(element => {
         if (element === this.prevSelectLine){
+          this.selectPoint.line = element;
+          this.selectPoint.line.selected = true;
           element.selected = true;
+          console.log("Hello");
+        }
+        else{
+          this.selectPoint.line = selectionBuffer[0];
+          this.selectPoint.line.selected = true;
         }
       })
     }
+
   }
 
   isOverLine(aline){
