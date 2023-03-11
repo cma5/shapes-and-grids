@@ -210,6 +210,7 @@ class MyLines {
     }
     else {
       cursor('grabbing');
+      this.isDragable = true;
     }
   }
 
@@ -553,7 +554,8 @@ function mousePressed() {
   //Long Version: let {coarseX: coarseX,
   // fineX: fineX, coarseY: coarseY, fineY: fineY} = getCursorGridPos()
   let {retX, retY, isNearPoint} = mylines1.getCursorGridPos()
-  mylines1.selectLine(retX, retY);
+  if (!mylines1.selectPoint.isactive){
+    mylines1.selectLine(retX, retY);}
   if(isNearPoint === true){
     if(mylines1.selectPoint.isactive){
       mylines1.hoverstate = true;
@@ -576,7 +578,11 @@ function mouseReleased() {
     mylines1.getGridCoord(retY)===y2 &&
     !(x1 === x2 && y1 === y2))//prevent single point lines
     { 
-      if(mylines1.isDragable){
+      if(!mylines1.isDragable){
+        const mynewline = new MyLine(x1,y1,x2,y2);
+        mylines1.mymemories.lines.add(mynewline);
+      }
+      else{
         if (!mylines1.selectPoint.is2){
           mylines1.selectPoint.line.x1 = x2;
           mylines1.selectPoint.line.y1 = y2;
@@ -584,11 +590,7 @@ function mouseReleased() {
         else{
           mylines1.selectPoint.line.x2 = x2;
           mylines1.selectPoint.line.y2 = y2;
-        } 
-      }
-      else{
-        const mynewline = new MyLine(x1,y1,x2,y2);
-        mylines1.mymemories.lines.add(mynewline);
+        }
       }
     
   }
