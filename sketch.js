@@ -10,7 +10,7 @@ let myflag = 0;
 //buttons
 let buttonClear;
 let buttonRandom;
-let buttonSpace = 120;
+let buttonSpace = 200;
 
 //checkboxes
 let gridCheckbox;
@@ -105,10 +105,11 @@ class MyLines {
     this.isOnTarget = false;
     this.targetCoords = {x1 : 0, y1 : 0, x2 : 0, y2 : 0}
     this.cDim = 3;
-    this.selectPoint = {isactive: false, line: new MyLine, is2 : false}
-    this.cursorval = ''
-    this.hoverstate = false
-    this.isDragable = false
+    this.selectPoint = {isactive: false, line: new MyLine, is2 : false};
+    this.prevSelectLine = new MyLine;
+    this.cursorval = '';
+    this.hoverstate = false;
+    this.isDragable = false;
   }
 
   getCanvasCoord(val){
@@ -196,6 +197,12 @@ class MyLines {
         cursor('grab');
         this.selectPoint.isactive = true;
       }
+      else if(
+        this.selectPoint.line &&
+        this.isOverLine(this.selectPoint.line)
+      ){
+        cursor('grab');
+      }
       else {
         cursor();
         this.selectPoint.isactive = false;
@@ -206,14 +213,20 @@ class MyLines {
     }
   }
 
-  isOnLine(lineselect = true){
+  selectLine(retX, retY, lineselect = true){
     let count = 0;
+    let selectionBuffer = [];
     this.mymemories.lines.forEach(element => {
       if (lineselect){
-        if(this.isOverLine(element)){
-          element.selected = true;
-          this.selectPoint.line = element;
+        if(
+          this.isOverLine(element) ||
+          (this.getGridCoord(retX) === element.x1 && this.getGridCoord(retY) === element.y1) ||
+          (this.getGridCoord(retX) === element.x2 && this.getGridCoord(retY) === element.y2)
+        ){
+
           count += 1;
+          selectionBuffer.push(element);
+
         }
         else {
           element.selected = false;
@@ -224,6 +237,17 @@ class MyLines {
     console.log(count)
     if(count === 0){
       this.selectPoint.line = 0;
+    }
+    else if (count === 1){
+      this.selectPoint.line = selectionBuffer[0];
+      this.selectPoint.line.selected = true;
+    }
+    else {
+      selectionBuffer.forEach(element => {
+        if (element === this.prevSelectLine){
+          element.selected = true;
+        }
+      })
     }
   }
 
@@ -500,9 +524,19 @@ function draw() {
   mylines1.printMe(true, true);
   mylines1.drawLines();
   mylines1.hover();
+  let {retX, retY, isNearPoint} = mylines1.getCursorGridPos()
   //console.log(mylines1.cursorval);
   textSize(14);
-  text(`Hoverstate: ${mylines1.hoverstate}\nisDragable: ${mylines1.isDragable}\nSelectionpoint active: ${mylines1.selectPoint.isactive}\nSelectionpoint is2: ${mylines1.selectPoint.is2}`, 20, 690);
+  text(
+`Hoverstate:\t\t\t\t\t\t\t\t\t${mylines1.hoverstate}
+isDragable:\t\t\t\t\t\t\t\t\t${mylines1.isDragable}
+Selectionpoint active:\t${mylines1.selectPoint.isactive}
+Selectionpoint is2: \t\t\t${mylines1.selectPoint.is2}
+Is on target: \t\t\t\t\t\t\t\t${mylines1.isOnTarget}
+Cursor grid positions:\tx: ${retX}, y: ${retY}`,
+20,
+690
+);
   //mylines1.mirror_objects()
 }
 
@@ -510,7 +544,7 @@ function mousePressed() {
   //Long Version: let {coarseX: coarseX,
   // fineX: fineX, coarseY: coarseY, fineY: fineY} = getCursorGridPos()
   let {retX, retY, isNearPoint} = mylines1.getCursorGridPos()
-  mylines1.isOnLine();
+  mylines1.selectLine(retX, retY);
   if(isNearPoint === true){
     if(mylines1.selectPoint.isactive){
       mylines1.hoverstate = true;
